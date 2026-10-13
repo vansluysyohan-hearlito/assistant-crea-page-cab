@@ -1,0 +1,910 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Créer la page de votre cabinet infirmier</title>
+<style>
+:root{
+  --bg:#fdf9f4; --surface:#fff; --text:#25302f; --muted:#62716f;
+  --primary:#1b8a82; --primary-dark:#126862; --soft:#e3f3f0;
+  --warm:#fde8d8; --warm-dark:#b8642b; --border:#eadfd2; --danger:#b3261e;
+}
+@media (prefers-color-scheme: dark){
+  :root{
+    --bg:#121b1a; --surface:#1a2726; --text:#eaf2f0; --muted:#a3b6b3;
+    --primary:#48c2b8; --primary-dark:#8adbd3; --soft:#1d3331;
+    --warm:#34281f; --warm-dark:#f0a674; --border:#2b3d3b; --danger:#ff8a80;
+    color-scheme:dark;
+  }
+}
+*{box-sizing:border-box}
+html,body{height:100%;margin:0}
+body{font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;font-size:1.06rem;line-height:1.5;color:var(--text);background:var(--bg);
+  padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+button,input,textarea,select{font:inherit;color:inherit}
+:focus-visible{outline:3px solid var(--primary);outline-offset:2px}
+
+.app{display:grid;grid-template-columns:1fr;height:100%}
+@media (min-width:1000px){.app{grid-template-columns:minmax(420px,520px) 1fr}}
+
+/* Colonne chat */
+.chat-col{display:flex;flex-direction:column;height:100%;min-height:0;border-right:1px solid var(--border);background:var(--bg)}
+.top{display:flex;align-items:center;gap:12px;padding:12px 16px;border-bottom:1px solid var(--border);background:var(--surface)}
+.top .logo{width:36px;height:36px;border-radius:50%;background:var(--primary);color:#fff;display:grid;place-items:center;flex-shrink:0;font-size:1.1rem}
+.top .t{flex:1;min-width:0}
+.top strong{display:block;font-size:1rem;line-height:1.2}
+.progress{height:6px;border-radius:99px;background:var(--soft);margin-top:6px;overflow:hidden}
+.progress span{display:block;height:100%;width:0;background:var(--primary);transition:width .3s}
+.top small{color:var(--muted);font-size:.85rem}
+.btn-preview{border:2px solid var(--primary);background:transparent;color:var(--primary-dark);border-radius:99px;padding:6px 14px;font-weight:600;cursor:pointer;white-space:nowrap}
+@media (min-width:1000px){.btn-preview{display:none}}
+
+.messages{flex:1;overflow-y:auto;padding:20px 16px 8px;display:flex;flex-direction:column;gap:10px}
+.msg{max-width:88%;padding:12px 16px;border-radius:20px;white-space:pre-line}
+.msg.bot{align-self:flex-start;background:var(--surface);border:1px solid var(--border);border-bottom-left-radius:6px}
+.msg.bot .ex{display:block;color:var(--muted);font-size:.92rem;margin-top:4px}
+.msg.me{align-self:flex-end;background:var(--primary);color:#fff;border-bottom-right-radius:6px}
+.msg.me.skip{background:var(--soft);color:var(--muted);font-style:italic}
+.msg.new{animation:pop .25s ease-out}
+@keyframes pop{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+@media (prefers-reduced-motion:reduce){.msg.new{animation:none}.progress span{transition:none}}
+
+/* Zone de réponse */
+.composer{border-top:1px solid var(--border);background:var(--surface);padding:14px 16px 16px;max-height:62vh;overflow-y:auto}
+.field{display:flex;flex-direction:column;gap:6px;margin-bottom:10px}
+.field label{font-size:.9rem;color:var(--muted)}
+.inp{width:100%;padding:13px 14px;border:2px solid var(--border);border-radius:14px;background:var(--bg);font-size:1.08rem}
+.inp:focus{border-color:var(--primary);outline:none}
+textarea.inp{min-height:96px;resize:vertical}
+.row2{display:flex;gap:10px}
+.row2>*{flex:1}
+.err{color:var(--danger);font-size:.92rem;margin:0 0 10px;font-weight:600}
+.actions{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-top:6px}
+.b{border:0;border-radius:99px;padding:13px 22px;font-weight:600;cursor:pointer;font-size:1.02rem}
+.b.main{background:var(--primary);color:#fff;margin-left:auto}
+.b.main:hover{background:var(--primary-dark)}
+.b.sec{background:transparent;color:var(--primary-dark);border:2px solid var(--primary)}
+.b.link{background:transparent;color:var(--muted);padding:10px 6px;text-decoration:underline}
+.b.small{padding:8px 14px;font-size:.92rem}
+.quick{display:flex;flex-direction:column;gap:8px}
+.quick .opt{text-align:left;border:2px solid var(--border);background:var(--bg);border-radius:14px;padding:14px 16px;cursor:pointer;font-weight:600}
+.quick .opt:hover,.quick .opt.on{border-color:var(--primary);background:var(--soft)}
+.chips{display:flex;flex-wrap:wrap;gap:8px;margin:8px 0}
+.chip{display:inline-flex;align-items:center;gap:6px;background:var(--soft);color:var(--primary-dark);border-radius:99px;padding:6px 8px 6px 14px;font-weight:600}
+.chip button{border:0;background:transparent;cursor:pointer;font-size:1.1rem;line-height:1;padding:2px 6px;color:inherit}
+
+/* Horaires */
+.day{border:2px solid var(--border);border-radius:14px;padding:10px 12px;margin-bottom:8px}
+.day.on{border-color:var(--primary)}
+.day>label{display:flex;align-items:center;gap:10px;font-weight:600;cursor:pointer}
+.day input[type=checkbox]{width:22px;height:22px;accent-color:var(--primary)}
+.slot{display:flex;align-items:center;gap:8px;margin-top:8px;flex-wrap:wrap}
+.slot input{padding:8px 10px;border:2px solid var(--border);border-radius:10px;background:var(--bg)}
+.slot .x{border:0;background:transparent;color:var(--muted);cursor:pointer;text-decoration:underline}
+
+/* Équipe */
+.member{border:2px solid var(--border);border-radius:14px;padding:12px;margin-bottom:8px}
+.seg{display:flex;gap:6px;margin-top:8px}
+.seg button{flex:1;border:2px solid var(--border);background:var(--bg);border-radius:10px;padding:8px;cursor:pointer;font-weight:600}
+.seg button.on{border-color:var(--primary);background:var(--soft);color:var(--primary-dark)}
+
+/* Soins */
+details.cat{border:2px solid var(--border);border-radius:14px;margin-bottom:8px;background:var(--bg)}
+details.cat summary{padding:12px 14px;font-weight:700;cursor:pointer;display:flex;align-items:center;gap:8px}
+details.cat summary .n{margin-left:auto;font-weight:600;font-size:.85rem;color:var(--primary-dark)}
+details.cat .in{padding:0 14px 12px}
+.check{display:flex;gap:10px;align-items:flex-start;padding:7px 0;cursor:pointer}
+.check input{width:22px;height:22px;flex-shrink:0;accent-color:var(--primary);margin-top:1px}
+
+/* Couleurs */
+.themes{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.theme{border:2px solid var(--border);border-radius:14px;padding:12px;cursor:pointer;background:var(--bg);text-align:left}
+.theme.on{border-color:var(--primary);box-shadow:0 0 0 2px var(--primary) inset}
+.theme .sw{display:flex;gap:4px;margin-bottom:8px}
+.theme .sw i{width:26px;height:26px;border-radius:50%;display:block}
+
+/* Récapitulatif */
+.recap{align-self:stretch;background:var(--surface);border:1px solid var(--border);border-radius:20px;padding:6px 16px}
+.recap .it{display:flex;gap:10px;align-items:flex-start;padding:10px 0;border-bottom:1px dashed var(--border)}
+.recap .it:last-child{border-bottom:0}
+.recap .it div{flex:1;min-width:0}
+.recap .it small{display:block;color:var(--muted);font-size:.85rem}
+.recap .it span{white-space:pre-line;overflow-wrap:anywhere}
+.recap .it button{border:0;background:transparent;color:var(--primary-dark);font-weight:600;cursor:pointer;text-decoration:underline;padding:4px}
+
+/* Visuel de la page dans le chat */
+.visuel{align-self:stretch;max-width:100%;min-width:0;background:var(--surface);border:1px solid var(--border);border-radius:20px;padding:16px;display:flex;flex-direction:column;align-items:center;gap:12px}
+.visuel p{margin:0;align-self:flex-start}
+.ecran{width:100%;max-width:380px;border:10px solid var(--text);border-radius:34px;overflow:hidden;background:#fff;box-shadow:0 14px 34px rgba(0,0,0,.18)}
+.ecran .zoom{position:relative;overflow:hidden;width:100%;height:600px}
+.ecran iframe{position:absolute;top:0;left:0;display:block;width:390px;height:780px;border:0;background:#fff;transform-origin:0 0}
+
+/* Aperçu */
+.preview-col{display:none;flex-direction:column;min-height:0;background:var(--soft)}
+@media (min-width:1000px){.preview-col{display:flex}}
+.preview-col .bar{padding:12px 18px;display:flex;align-items:center;gap:10px;color:var(--muted);font-size:.92rem;border-bottom:1px solid var(--border);background:var(--surface)}
+.preview-col .bar strong{color:var(--text)}
+.preview-col .bar button{margin-left:auto}
+.preview-col iframe{flex:1;border:0;width:100%;background:#fff}
+.preview-col.open{display:flex;position:fixed;inset:0;z-index:20;padding-top:env(safe-area-inset-top,0px)}
+.close-prev{display:inline-block}
+@media (min-width:1000px){.close-prev{display:none}}
+
+/* Espace administrateur */
+.admin{max-width:900px;margin:0 auto;padding:24px 18px 60px}
+.admin h1{font-size:1.6rem;margin:0 0 6px}
+.admin .box{background:var(--surface);border:1px solid var(--border);border-radius:20px;padding:18px;margin:16px 0}
+.admin .box h2{font-size:1.1rem;margin:0 0 10px}
+.admin iframe{width:100%;height:70vh;border:1px solid var(--border);border-radius:14px;background:#fff}
+.admin .ok{color:var(--primary-dark);font-weight:600}
+[hidden]{display:none!important}
+</style>
+</head>
+<body>
+
+<div class="app" id="app">
+  <div class="chat-col">
+    <div class="top">
+      <div class="logo" aria-hidden="true">✚</div>
+      <div class="t">
+        <strong>Créer la page de votre cabinet</strong>
+        <small id="step-label">Bienvenue</small>
+        <div class="progress" aria-hidden="true"><span id="bar"></span></div>
+      </div>
+      <button class="btn-preview" id="open-preview" type="button">Voir ma page</button>
+    </div>
+    <div class="messages" id="messages" aria-live="polite"></div>
+    <div class="composer" id="composer"></div>
+  </div>
+  <div class="preview-col" id="preview-col">
+    <div class="bar"><strong>Aperçu de votre page</strong><span>se met à jour à chaque réponse</span>
+      <button class="b sec small close-prev" id="close-preview" type="button">Revenir aux questions</button></div>
+    <iframe id="preview" title="Aperçu de la page du cabinet"></iframe>
+  </div>
+</div>
+
+<div class="admin" id="admin" hidden>
+  <h1>Espace administrateur</h1>
+  <p style="color:var(--muted);margin:0">Chargez les réponses envoyées par un cabinet pour obtenir sa page prête à publier.</p>
+
+  <div class="box">
+    <h2>1. Charger les réponses</h2>
+    <div class="actions" style="margin-top:0">
+      <label class="b sec small" style="cursor:pointer">Choisir un fichier de réponses<input type="file" id="adm-file" accept=".json,application/json" hidden></label>
+      <button class="b sec small" id="adm-example" type="button">Charger un exemple fictif</button>
+    </div>
+    <div class="field" style="margin-top:12px"><label for="adm-paste">…ou collez ici le texte reçu par message</label>
+      <textarea class="inp" id="adm-paste" placeholder='{"nom": "Cabinet infirmier…", …}'></textarea></div>
+    <button class="b sec small" id="adm-paste-btn" type="button">Charger le texte collé</button>
+    <p id="adm-status" class="ok" aria-live="polite"></p>
+  </div>
+
+  <div class="box">
+    <h2>2. Compléter les mentions légales</h2>
+    <div class="field"><label for="adm-host">Hébergeur du site (nom, adresse, téléphone) — retenu sur cet ordinateur pour les prochains cabinets</label>
+      <textarea class="inp" id="adm-host" style="min-height:70px" placeholder="Nom de l'hébergeur, adresse postale, téléphone"></textarea></div>
+  </div>
+
+  <div class="box">
+    <h2>3. Vérifier et télécharger</h2>
+    <div class="actions" style="margin:0 0 12px">
+      <button class="b main small" id="adm-download" type="button" style="margin-left:0" disabled>Télécharger la page (index.html)</button>
+      <button class="b sec small" id="adm-edit" type="button" disabled>Corriger dans l'assistant</button>
+      <button class="b sec small" id="adm-json" type="button" disabled>Télécharger les réponses mises à jour</button>
+    </div>
+    <iframe id="adm-preview" title="Aperçu de la page"></iframe>
+  </div>
+</div>
+
+<script>
+/* ==========================================================
+   RÉGLAGES
+   ========================================================== */
+// Prénom de la personne qui met les pages en ligne (affiché à la fin).
+// Laisser vide pour afficher « la personne qui vous a transmis ce lien ».
+var DESTINATAIRE = '';
+
+/* ==========================================================
+   CATALOGUE DES SOINS
+   ========================================================== */
+var SOINS = [
+  {id:'sang', ico:'💉', titre:'Prises de sang et injections', items:[
+    'Prises de sang à domicile','Injections sous-cutanées, intramusculaires et intraveineuses',
+    "Injections d'insuline et contrôle de la glycémie",'Vaccinations (grippe, Covid…)',
+    'Injections de traitements à action prolongée']},
+  {id:'perf', ico:'💧', titre:'Perfusions et traitements spécifiques', items:[
+    'Perfusions (antibiotiques, hydratation, nutrition…)','Soins sur chambre implantable (PAC) et PICC line',
+    'Chimiothérapie à domicile (surveillance, branchement et débranchement)',
+    'Gestion des pompes (insuline, traitement de la douleur)','Alimentation par sonde (sonde nasogastrique, gastrostomie)']},
+  {id:'pans', ico:'🩹', titre:'Pansements et cicatrisation', items:[
+    'Pansements simples et après une opération',
+    'Pansements complexes : ulcères, escarres, plaies du pied diabétique, brûlures',
+    "Retrait de fils et d'agrafes",'Retrait de drains et de mèches',
+    'Thérapie par pression négative (VAC)','Pose de bandes de contention']},
+  {id:'tech', ico:'🩺', titre:'Autres soins techniques', items:[
+    'Soins de stomie (poche digestive ou urinaire)','Soins de trachéotomie et aspirations','Aérosols']},
+  {id:'suivi', ico:'📈', titre:'Suivi et accompagnement', items:[
+    'Préparation et distribution des médicaments (pilulier)',
+    'Surveillance des traitements et des constantes (tension, pouls, température…)',
+    'Suivi des traitements anticoagulants','Suivi des patients diabétiques',
+    'Accompagnement du retour à domicile après une hospitalisation',
+    'Surveillance après hospitalisation pour insuffisance cardiaque ou BPCO',
+    'Conseils, éducation à la santé et bilan de prévention',
+    'Accompagnement lors de téléconsultations avec votre médecin ou spécialiste']},
+  {id:'auto', ico:'🛁', titre:"Aide au quotidien et perte d'autonomie", items:[
+    "Évaluation des besoins et mise en place d'un plan de soins (bilan de soins infirmiers)",
+    "Toilette et soins d'hygiène",'Prévention des escarres et des chutes']},
+  {id:'pal', ico:'💛', titre:'Douleur et fin de vie', items:[
+    'Évaluation et prise en charge de la douleur',
+    "Soins palliatifs à domicile, en lien avec l'HAD et les réseaux de soins",
+    'Accompagnement et soutien des proches']}
+];
+
+/* ==========================================================
+   PHRASES D'ACCROCHE
+   ========================================================== */
+var ACCROCHES = {
+  humain:{nom:'Humain', h1:"Des soins infirmiers. <em>À vos côtés</em>, avec bienveillance et professionnalisme, pour prendre soin de votre santé au quotidien"},
+  holistique:{nom:'Approche globale', h1:"Prendre soin de <em>la personne</em>, pas seulement de la maladie : des soins attentifs à votre santé, à votre confort et à votre entourage"},
+  bref:{nom:'Bref', h1:"Vos soins infirmiers, <em>près de chez vous</em>"},
+  medical:{nom:'Médical', h1:"Des soins infirmiers <em>sur prescription médicale</em>, réalisés avec rigueur et en lien avec votre médecin traitant"}
+};
+function texteAccroche(k){var a=ACCROCHES[k];return a?a.h1.replace(/<\/?em>/g,''):k;}
+
+/* ==========================================================
+   COULEURS PROPOSÉES
+   ========================================================== */
+var THEMES = {
+  turquoise:{nom:'Turquoise', light:{bg:'#fdf9f4',surface:'#ffffff',text:'#25302f',muted:'#62716f',primary:'#1b8a82',primaryDark:'#126862',soft:'#e3f3f0',warm:'#fde8d8',warmDark:'#b8642b',border:'#eadfd2',shadowRgb:'27, 138, 130'},
+    dark:{bg:'#121b1a',surface:'#1a2726',text:'#eaf2f0',muted:'#a3b6b3',primary:'#48c2b8',primaryDark:'#8adbd3',soft:'#1d3331',warm:'#34281f',warmDark:'#f0a674',border:'#2b3d3b'}},
+  bleu:{nom:'Bleu', light:{bg:'#f8fafc',surface:'#ffffff',text:'#1f2a37',muted:'#5d6b7a',primary:'#2f6fb3',primaryDark:'#1f4f86',soft:'#e4eef9',warm:'#fdf0d8',warmDark:'#a8641c',border:'#dfe5ec',shadowRgb:'47, 111, 179'},
+    dark:{bg:'#111821',surface:'#18222e',text:'#e9eff6',muted:'#a2b1c2',primary:'#6ea8e8',primaryDark:'#a9cdf5',soft:'#1b2a3b',warm:'#33291c',warmDark:'#f0b56c',border:'#2a3a4c'}},
+  sauge:{nom:'Vert sauge', light:{bg:'#faf8f2',surface:'#ffffff',text:'#26302a',muted:'#626e64',primary:'#4f7f52',primaryDark:'#3a603d',soft:'#e7f1e4',warm:'#f6ead9',warmDark:'#9a6a2e',border:'#e6e0d2',shadowRgb:'79, 127, 82'},
+    dark:{bg:'#141a15',surface:'#1c241d',text:'#eaf1ea',muted:'#a7b5a8',primary:'#7fb582',primaryDark:'#b3d8b5',soft:'#203024',warm:'#33291d',warmDark:'#e7b075',border:'#2e3b30'}},
+  prune:{nom:'Prune', light:{bg:'#fcf8f9',surface:'#ffffff',text:'#2f2530',muted:'#6f6170',primary:'#8a4f7d',primaryDark:'#6a3a60',soft:'#f4e8f1',warm:'#fde9df',warmDark:'#b0573a',border:'#ecdfe6',shadowRgb:'138, 79, 125'},
+    dark:{bg:'#1a1419',surface:'#241c23',text:'#f2eaf0',muted:'#bba9b8',primary:'#c58bb8',primaryDark:'#e2bcd9',soft:'#33222f',warm:'#36261f',warmDark:'#f0a888',border:'#3b2c38'}}
+};
+
+/* ==========================================================
+   EXEMPLE FICTIF
+   ========================================================== */
+var EXEMPLE = {
+  nom:'Cabinet infirmier des Tilleuls', rue:'8 rue des Écoles', cp:'12345', ville:'Villeneuve',
+  repere:'En face de la mairie', tel:'05 36 49 12 34', tel2:'06 39 98 12 34', email:'contact@cabinet-exemple.fr',
+  communes:['Villeneuve','Saint-Pierre','Les Moulins'], jours:'7 jours sur 7', heures:['06:30','20:00'], perm:true,
+  permanences:{'1':[['07:00','08:00']],'3':[['07:00','08:00']],'5':[['07:00','08:00'],['17:30','18:00']]},
+  equipe:[{nom:'Claire Dupont',g:'f'},{nom:'Sophie Martin',g:'f'},{nom:'Thomas Bernard',g:'m'}],
+  soins:(function(){var o={};SOINS.forEach(function(c){o[c.id]=c.items.slice();});return o;})(),
+  autres:'', accroche:'humain', responsable:{nom:'Claire Dupont',rpps:''}, theme:'turquoise'
+};
+
+/* ==========================================================
+   OUTILS
+   ========================================================== */
+var JOURS = [{d:'1',n:'Lundi'},{d:'2',n:'Mardi'},{d:'3',n:'Mercredi'},{d:'4',n:'Jeudi'},{d:'5',n:'Vendredi'},{d:'6',n:'Samedi'},{d:'0',n:'Dimanche'}];
+function esc(s){return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
+function h(tag,attrs){var el=document.createElement(tag);attrs=attrs||{};
+  for(var k in attrs){if(k==='text')el.textContent=attrs[k];else if(k==='html')el.innerHTML=attrs[k];
+    else if(k.slice(0,2)==='on')el.addEventListener(k.slice(2),attrs[k]);else if(attrs[k]!==false&&attrs[k]!=null)el.setAttribute(k,attrs[k]===true?'':attrs[k]);}
+  for(var i=2;i<arguments.length;i++){var c=arguments[i];if(c==null)continue;el.appendChild(typeof c==='string'?document.createTextNode(c):c);}
+  return el;}
+function digits(s){return String(s||'').replace(/\D/g,'');}
+function normTel(s){var d=digits(s);if(d.indexOf('33')===0&&d.length===11)d='0'+d.slice(2);return d;}
+function fmtTel(s){var d=normTel(s);return d.length===10?d.replace(/(\d\d)(?=\d)/g,'$1 '):String(s||'');}
+function telHref(s){var d=normTel(s);return d.length===10?'+33'+d.slice(1):d;}
+function fmtH(t){if(!t)return '';var p=t.split(':');return (+p[0])+'h'+p[1];}
+function cap(s){s=String(s||'');return s.charAt(0).toUpperCase()+s.slice(1);}
+function initiales(n){var p=String(n||'').trim().split(/\s+/).filter(Boolean);if(!p.length)return '?';
+  return (p[0][0]+(p.length>1?p[p.length-1][0]:'')).toUpperCase();}
+function titreIDE(g){return g==='m'?"Infirmier diplômé d'État":"Infirmière diplômée d'État";}
+function slug(s){return String(s||'cabinet').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'')||'cabinet';}
+function listeFr(a){if(a.length<2)return a.join('');return a.slice(0,-1).join(', ')+' et '+a[a.length-1];}
+function joursPerm(p){
+  var ouverts=JOURS.filter(function(j){return p&&p[j.d]&&p[j.d].length;});
+  if(!ouverts.length)return '';
+  var idx=ouverts.map(function(j){return JOURS.indexOf(j);});
+  var suite=idx.every(function(v,i){return i===0||v===idx[i-1]+1;});
+  if(suite&&ouverts.length>=3)return 'Du '+ouverts[0].n.toLowerCase()+' au '+ouverts[ouverts.length-1].n.toLowerCase();
+  return cap(listeFr(ouverts.map(function(j){return j.n.toLowerCase();})));
+}
+function creneaux(p,d){return (p&&p[d]||[]).map(function(s){return fmtH(s[0])+' – '+fmtH(s[1]);}).join(' · ');}
+function jsonScript(v){return JSON.stringify(v).replace(/</g,'\\u003c');}
+
+/* ==========================================================
+   GÉNÉRATION DE LA PAGE
+   ========================================================== */
+var BASE_CSS = "* { box-sizing: border-box; }\nhtml { scroll-behavior: smooth; }\n\nbody {\n  margin: 0;\n  font-family: system-ui, -apple-system, \"Segoe UI\", Roboto, sans-serif;\n  font-size: 1.05rem;\n  line-height: 1.65;\n  color: var(--text);\n  background: var(--bg);\n  font-variant-numeric: lining-nums tabular-nums;\n}\n\n/* Numéros de téléphone : police sans empattement, chiffres alignés */\na[href^=\"tel:\"] { font-family: system-ui, -apple-system, \"Segoe UI\", Roboto, sans-serif; letter-spacing: .02em; white-space: nowrap; }\n.btn, nav.menu a.call { justify-content: center; line-height: 1.2; }\n\nh1, h2, h3 { font-family: var(--serif); font-weight: 700; line-height: 1.2; }\na { color: var(--primary-dark); }\n.wrap { max-width: 1080px; margin: 0 auto; padding: 0 20px; }\n\n/* En-tête */\nheader.site {\n  position: sticky; top: 0; z-index: 10;\n  background: color-mix(in srgb, var(--bg) 92%, transparent);\n  backdrop-filter: blur(8px);\n  border-bottom: 1px solid var(--border);\n}\nheader.site .wrap { display: flex; align-items: center; justify-content: space-between; gap: 12px; min-height: 66px; }\n.brand { display: flex; align-items: center; gap: 10px; font-family: var(--serif); font-weight: 700; font-size: 1.1rem; text-decoration: none; color: var(--text); }\n.brand { flex-shrink: 0; }\n.brand .logo { flex-shrink: 0; width: 38px; height: 38px; border-radius: 50%; background: var(--primary); color: #fff; display: grid; place-items: center; font-size: 1.2rem; line-height: 1; }\n.brand-name { display: flex; flex-direction: column; line-height: 1.15; white-space: nowrap; letter-spacing: -.01em; }\n.brand-name small { font-size: .82rem; font-weight: 600; color: var(--primary-dark); letter-spacing: 0; }\nnav.menu { display: flex; align-items: center; gap: 18px; }\nnav.menu a { text-decoration: none; color: var(--muted); font-size: .98rem; white-space: nowrap; }\n@media (max-width: 1050px) { nav.menu a:not(.call):not(.save) { display: none; } }\nnav.menu a:hover { color: var(--primary-dark); }\nnav.menu a.call { background: var(--primary); color: #fff; padding: 8px 18px; border-radius: 999px; font-weight: 600; }\nnav.menu a.call:hover { background: var(--primary-dark); color: #fff; }\n\nnav.menu a.save { border: 2px solid var(--primary); color: var(--primary-dark); padding: 6px 16px; border-radius: 999px; font-weight: 600; white-space: nowrap; }\nnav.menu a.save:hover { background: var(--soft); color: var(--primary-dark); }\n\n/* Bandeau des campagnes */\n.bandeau { background: var(--warm); border-bottom: 1px solid var(--border); }\n.bandeau[hidden] { display: none; }\n.bandeau .wrap { display: flex; flex-wrap: wrap; gap: 12px 40px; padding-top: 12px; padding-bottom: 12px; }\n.bandeau-item { display: flex; align-items: flex-start; gap: 12px; font-size: .95rem; line-height: 1.45; flex: 1 1 320px; }\n.bandeau-ico { font-size: 1.5rem; line-height: 1.2; }\n.bandeau-item small { color: var(--warm-dark); font-weight: 700; text-transform: uppercase; letter-spacing: .04em; font-size: .75rem; }\n.bandeau-item a { white-space: nowrap; font-weight: 600; }\n\n/* Boutons */\n.btn {\n  display: inline-flex; align-items: center; gap: 8px;\n  padding: 14px 26px; border-radius: 999px;\n  background: var(--primary); color: #fff; text-decoration: none;\n  font-weight: 600; border: 2px solid var(--primary);\n  box-shadow: var(--btn-shadow);\n  transition: transform .15s;\n}\n.btn:hover { transform: translateY(-2px); background: var(--primary-dark); border-color: var(--primary-dark); color: #fff; }\n.btn.ghost { background: transparent; color: var(--primary-dark); box-shadow: none; }\n.btn.ghost:hover { background: var(--soft); color: var(--primary-dark); }\n\n/* Hero */\n.hero { position: relative; overflow: hidden; padding: 72px 0 80px; background: linear-gradient(180deg, var(--soft), var(--bg)); }\n.hero::before, .hero::after { content: \"\"; position: absolute; border-radius: 50%; z-index: 0; }\n.hero::before { width: 420px; height: 420px; background: var(--warm); opacity: .7; right: -120px; top: -120px; }\n.hero::after { width: 260px; height: 260px; background: var(--primary); opacity: .08; left: -90px; bottom: -90px; }\n.hero .wrap { position: relative; z-index: 1; display: grid; gap: 40px; grid-template-columns: 1.3fr 1fr; align-items: center; }\n.eyebrow { display: inline-block; margin-bottom: 14px; padding: 6px 14px; border-radius: 999px; background: var(--surface); color: var(--primary-dark); font-size: .9rem; font-weight: 600; border: 1px solid var(--border); }\n.hero h1 { font-size: clamp(1.7rem, 4vw, 2.5rem); margin: 0 0 16px; }\n.hero h1 em { color: var(--primary); font-style: italic; }\n.hero p.lead { font-size: 1.2rem; color: var(--muted); margin: 0 0 28px; max-width: 560px; }\n.hero .actions { display: flex; flex-wrap: wrap; gap: 12px; }\n\n.hero-card { background: var(--surface); border-radius: var(--radius); padding: 26px; box-shadow: var(--shadow); border: 1px solid var(--border); }\n.hero-card h2 { font-size: 1.2rem; margin: 0 0 12px; }\n.hero-card .row { display: flex; gap: 12px; align-items: flex-start; padding: 10px 0; border-top: 1px solid var(--border); }\n.hero-card .row:first-of-type { border-top: 0; }\n.hero-card .ico { font-size: 1.4rem; line-height: 1.3; }\n.hero-card small { display: block; color: var(--muted); }\n.status { margin-top: 14px; padding: 10px 14px; border-radius: 12px; background: var(--soft); color: var(--primary-dark); font-weight: 600; font-size: .95rem; }\n\n/* Sections */\nsection { padding: 72px 0; }\nsection.alt { background: var(--surface); }\n.section-head { text-align: center; max-width: 720px; margin: 0 auto 40px; }\n.section-head h2 { font-size: clamp(1.7rem, 4vw, 2.3rem); margin: 0 0 12px; }\n.section-head p { color: var(--muted); margin: 0; }\n\n/* Atouts */\n.values { display: grid; gap: 20px; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); }\n.value { text-align: center; padding: 28px 22px; border-radius: var(--radius); background: var(--warm); }\n.value .ico { font-size: 2rem; }\n.value h3 { margin: 8px 0 6px; font-size: 1.2rem; color: var(--warm-dark); }\n.value p { margin: 0; color: var(--text); }\n\n/* Cartes de soins */\n.cards { display: grid; gap: 22px; grid-template-columns: repeat(auto-fill, minmax(310px, 1fr)); }\n.card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 26px; box-shadow: var(--shadow); }\nsection.alt .card { background: var(--bg); box-shadow: none; }\n.card .badge { width: 52px; height: 52px; border-radius: 16px; background: var(--soft); display: grid; place-items: center; font-size: 1.6rem; margin-bottom: 14px; }\n.card h3 { margin: 0 0 12px; font-size: 1.2rem; }\n.card ul { margin: 0; padding-left: 20px; }\n.card li { margin-bottom: 7px; }\n.card li::marker { color: var(--primary); }\n\n.note { margin: 36px auto 0; max-width: 760px; padding: 18px 24px; border-radius: var(--radius); background: var(--warm); text-align: center; }\n\n/* Horaires */\n.grid2 { display: grid; gap: 22px; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); }\ntable.hours { width: 100%; border-collapse: collapse; }\ntable.hours td { padding: 10px 0; border-bottom: 1px dashed var(--border); }\ntable.hours tr:last-child td { border-bottom: 0; }\ntable.hours td:last-child { text-align: right; font-variant-numeric: tabular-nums; }\ntable.hours tr.today { font-weight: 700; color: var(--primary-dark); }\ntable.hours tr.today td:first-child::after { content: \" · aujourd'hui\"; font-weight: 400; font-size: .85rem; }\n.big { font-size: 1.3rem; font-weight: 700; font-family: var(--serif); font-variant-numeric: lining-nums; }\n\n/* Équipe */\n.team { display: grid; gap: 20px; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); }\n.member { text-align: center; padding: 28px 18px; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); box-shadow: var(--shadow); }\n.avatar { width: 76px; height: 76px; margin: 0 auto 12px; border-radius: 50%; background: var(--soft); color: var(--primary-dark); display: grid; place-items: center; font-family: var(--serif); font-size: 1.6rem; font-weight: 700; }\n.member h3 { margin: 0; font-size: 1.1rem; }\n.member p { margin: 4px 0 0; color: var(--muted); font-size: .95rem; }\n\n/* Contact */\n.contact-box { max-width: 760px; margin: 0 auto; padding: 36px; border-radius: var(--radius); background: var(--soft); text-align: center; }\n.contact-box .phones { display: flex; flex-wrap: wrap; gap: 12px; justify-content: center; margin: 18px 0; }\n.contact-box p { margin: 8px 0; }\n\nfooter.site { padding: 36px 0; color: var(--muted); font-size: .92rem; border-top: 1px solid var(--border); }\nfooter.site h3 { color: var(--text); font-size: 1rem; margin-bottom: 6px; }\n\n@media (max-width: 800px) {\n  .hero .wrap { grid-template-columns: 1fr; }\n  nav.menu a.call { display: none; }\n  nav.menu a.save .long { display: none; }\n  .brand { font-size: .95rem; }\n  nav.menu a.save { padding: 6px 12px; font-size: .88rem; }\n  section { padding: 52px 0; }\n  .hero { padding: 48px 0 56px; }\n}\n";
+
+function themeCss(key){
+  var t=THEMES[key]||THEMES.turquoise, l=t.light, d=t.dark;
+  function vars(v){return '--bg:'+v.bg+';--surface:'+v.surface+';--text:'+v.text+';--muted:'+v.muted+';--primary:'+v.primary+';--primary-dark:'+v.primaryDark+';--soft:'+v.soft+';--warm:'+v.warm+';--warm-dark:'+v.warmDark+';--border:'+v.border+';';}
+  return ':root{'+vars(l)+'--radius:22px;--shadow:0 10px 30px rgba(40,60,55,.08);--serif:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;--btn-shadow:0 6px 16px rgba('+l.shadowRgb+',.25);}\n'+
+    '@media (prefers-color-scheme: dark){:root{'+vars(d)+'--shadow:none;}}\n';
+}
+
+function genererPage(a, opts){
+  a=a||{}; opts=opts||{};
+  var nom=a.nom||'Votre cabinet infirmier';
+  var m=/^(cabinet infirmier)\s+(.+)$/i.exec(nom);
+  var marque=m?cap(m[1]):nom, sousMarque=m?m[2]:(a.ville||'');
+  var adresse1=a.rue||'Adresse du cabinet', adresse2=((a.cp||'')+' '+(a.ville||'')).trim()||'Code postal et commune';
+  var adresseLigne=adresse1+', '+adresse2;
+  var tel=a.tel?fmtTel(a.tel):'00 00 00 00 00', telH=telHref(a.tel||'');
+  var communes=(a.communes&&a.communes.length)?a.communes:[a.ville||'Votre commune'];
+  var jours=a.jours||'7 jours sur 7';
+  var hd=fmtH((a.heures||[])[0])||'…', hf=fmtH((a.heures||[])[1])||'…';
+  var perm=a.perm===true&&a.permanences&&joursPerm(a.permanences);
+  var resumePerm=perm?joursPerm(a.permanences):'';
+  var repere=a.repere?String(a.repere).trim():'';
+  var equipe=(a.equipe||[]).filter(function(p){return p.nom&&p.nom.trim();});
+  var resp=a.responsable||{};
+  var respMembre=equipe.filter(function(p){return p.nom===resp.nom;})[0];
+  var vcfNom=slug(nom)+'.vcf';
+
+  // Soins
+  var cartes=SOINS.map(function(c){
+    var items=(a.soins&&a.soins[c.id])||[];
+    if(!items.length)return '';
+    return '        <article class="card">\n          <div class="badge">'+c.ico+'</div>\n          <h3>'+esc(c.titre)+'</h3>\n          <ul>\n'+
+      items.map(function(i){return '            <li>'+esc(i)+'</li>';}).join('\n')+'\n          </ul>\n        </article>';
+  }).filter(Boolean);
+  var autres=String(a.autres||'').split('\n').map(function(s){return s.trim();}).filter(Boolean);
+  if(autres.length)cartes.push('        <article class="card">\n          <div class="badge">➕</div>\n          <h3>Autres soins</h3>\n          <ul>\n'+
+      autres.map(function(i){return '            <li>'+esc(i)+'</li>';}).join('\n')+'\n          </ul>\n        </article>');
+  if(!cartes.length)cartes.push('        <article class="card"><div class="badge">🩺</div><h3>Nos soins</h3><p style="color:var(--muted)">Les soins proposés apparaîtront ici.</p></article>');
+
+  // Horaires
+  var tableau=JOURS.map(function(j){
+    var c=creneaux(a.permanences,j.d);
+    return '            <tr data-day="'+j.d+'"><td>'+j.n+'</td><td>'+(c||'Soins à domicile')+'</td></tr>';
+  }).join('\n');
+
+  // Équipe
+  var membres=equipe.length?equipe.map(function(p){
+    return '        <div class="member"><div class="avatar">'+esc(initiales(p.nom))+'</div><h3>'+esc(p.nom)+'</h3><p>'+titreIDE(p.g)+'</p></div>';
+  }).join('\n'):'        <div class="member"><div class="avatar">?</div><h3>Prénom Nom</h3><p>Infirmière diplômée d\'État</p></div>';
+
+  // E-mail découpé (absent du code source en clair)
+  var mail=null;
+  if(a.email&&a.email.indexOf('@')>0){var at=a.email.split('@'),dom=at[1],pt=dom.lastIndexOf('.');
+    if(pt>0)mail=[at[0],dom.slice(0,pt),dom.slice(pt+1)];}
+
+  // Carte de visite (vCard), l'e-mail est ajouté à l'affichage
+  var vcard=['BEGIN:VCARD','VERSION:3.0','FN:'+nom,'ORG:'+nom,'TEL;TYPE=WORK,VOICE:'+(a.tel?telH:'')]
+    .concat(a.tel2?['TEL;TYPE=CELL:'+telHref(a.tel2)]:[])
+    .concat(['ADR;TYPE=WORK:;;'+adresse1+';'+(a.ville||'')+';;'+(a.cp||'')+';France','END:VCARD']);
+
+  var titrePage=nom+(perm?' – Soins à domicile et au cabinet':' – Soins infirmiers à domicile');
+  var description=nom+' ('+(a.cp||'')+') : soins infirmiers à domicile'+(perm?' et au cabinet':'')+', '+jours.toLowerCase()+', à '+listeFr(communes)+'.';
+  var hebergeur=opts.hebergeur?String(opts.hebergeur).trim():'';
+
+  var p=[];
+  p.push('<!doctype html>\n<html lang="fr">\n<head>\n  <meta charset="utf-8">\n  <meta name="viewport" content="width=device-width, initial-scale=1">');
+  p.push('  <title>'+esc(titrePage)+'</title>\n  <meta name="description" content="'+esc(description)+'">');
+  p.push('  <style>\n'+themeCss(a.theme)+BASE_CSS+'\n  </style>\n</head>\n<body>\n');
+
+  p.push('<header class="site">\n  <div class="wrap">\n    <a class="brand" href="#top"><span class="logo" aria-hidden="true">✚</span><span class="brand-name">'+esc(marque)+(sousMarque?'<small>'+esc(sousMarque)+'</small>':'')+'</span></a>');
+  p.push('    <nav class="menu" aria-label="Navigation principale">\n      <a href="#soins">Nos soins</a>\n      <a href="#infos">Horaires</a>\n      <a href="#equipe">Équipe</a>\n      <a href="#contact">Contact</a>');
+  p.push('      <a class="call" href="tel:'+esc(telH)+'">'+esc(tel)+'</a>\n      <a class="save vcf" href="#" download="'+esc(vcfNom)+'" title="Ajoute le cabinet à votre répertoire">＋ <span class="long">Enregistrer le </span>contact</a>\n    </nav>\n  </div>\n</header>\n');
+
+  p.push('<main id="top">\n  <div class="hero">\n    <div class="wrap">\n      <div>\n        <span class="eyebrow">'+esc(communes.join(' · '))+'</span>');
+  var acc=a.accroche||'humain';
+  p.push('        <h1>'+(ACCROCHES[acc]?ACCROCHES[acc].h1:esc(acc))+'</h1>');
+  p.push('        <p class="lead">Nous intervenons <strong>à votre domicile, '+esc(jours.toLowerCase())+', de '+hd+' à '+hf+'</strong>.'+(perm?' Certains soins peuvent aussi être réalisés <strong>au cabinet, pendant nos permanences</strong>.':'')+'</p>');
+  p.push('        <div class="actions">\n          <a class="btn" href="tel:'+esc(telH)+'">📞 Nous appeler</a>\n          <a class="btn ghost" href="#soins">Découvrir nos soins</a>\n        </div>\n      </div>\n');
+  p.push('      <aside class="hero-card" aria-label="En un coup d\'œil">\n        <h2>En un coup d\'œil</h2>');
+  p.push('        <div class="row"><span class="ico">🏠</span><div><strong>À domicile</strong><small>'+esc(cap(jours))+', de '+hd+' à '+hf+'</small></div></div>');
+  if(perm)p.push('        <div class="row"><span class="ico">🏥</span><div><strong>Au cabinet</strong><small>'+esc(resumePerm)+', pendant la permanence · '+esc(adresse1)+(repere?', '+esc(repere.charAt(0).toLowerCase()+repere.slice(1)):'')+'</small></div></div>');
+  p.push('        <div class="row"><span class="ico">📋</span><div><strong>Sur prescription médicale</strong><small>Pris en charge par l\'Assurance maladie</small></div></div>\n      </aside>\n    </div>\n  </div>\n');
+
+  p.push('  <section>\n    <div class="wrap">\n      <div class="values">');
+  p.push('        <div class="value"><div class="ico">🏡</div><h3>Chez vous</h3><p>Nous venons à votre domicile, pour limiter vos déplacements.</p></div>');
+  p.push('        <div class="value"><div class="ico">🗓️</div><h3>'+esc(cap(jours.replace(/^du /i,'')))+'</h3><p>Une équipe disponible '+(jours==='7 jours sur 7'?'tous les jours':esc(jours.toLowerCase()))+', de '+hd+' à '+hf+'.</p></div>');
+  p.push('        <div class="value"><div class="ico">🤝</div><h3>Une équipe à votre écoute</h3><p>Des soins de qualité, et un accompagnement pour vous et vos proches.</p></div>\n      </div>\n    </div>\n  </section>\n');
+
+  p.push('  <section id="soins" class="alt">\n    <div class="wrap">\n      <div class="section-head">\n        <h2>Nos soins</h2>');
+  p.push('        <p>Nos soins sont réalisés sur prescription médicale et pris en charge par l\'Assurance maladie dans le cadre de notre nomenclature. Des soins hors nomenclature, inclus dans notre domaine de compétence, peuvent être réalisés à votre charge.</p>\n      </div>\n');
+  p.push('      <div class="cards">\n'+cartes.join('\n\n')+'\n      </div>\n');
+  p.push('      <p class="note"><strong>En cas d\'urgence vitale</strong>, ne contactez pas le cabinet : appelez le <strong>15</strong> (SAMU) ou le <strong>112</strong>.</p>\n    </div>\n  </section>\n');
+
+  p.push('  <section id="infos">\n    <div class="wrap">\n      <div class="section-head">\n        <h2>Horaires et accès</h2>');
+  p.push('        <p><strong>À domicile :</strong> '+esc(jours.toLowerCase())+', de '+hd+' à '+hf+'.'+(perm?' <strong>Au cabinet :</strong> '+esc(resumePerm.charAt(0).toLowerCase()+resumePerm.slice(1))+', pendant la permanence indiquée ci-dessous.':'')+'</p>\n      </div>\n\n      <div class="grid2">');
+  if(perm){
+    p.push('        <div class="card">\n          <div class="badge">🕖</div>\n          <h3>Permanence au cabinet</h3>\n          <table class="hours" id="hours">\n'+tableau+'\n          </table>\n        </div>\n');
+  } else {
+    p.push('        <div class="card">\n          <div class="badge">🏠</div>\n          <h3>Soins à domicile</h3>\n          <p class="big">'+esc(cap(jours))+'<br>de '+hd+' à '+hf+'</p>\n          <p>Appelez-nous pour organiser vos soins.</p>\n        </div>\n');
+  }
+  p.push('        <div class="card">\n          <div class="badge">📍</div>\n          <h3>Où nous trouver</h3>\n          <p class="big">'+esc(adresse1)+'<br>'+esc(adresse2)+'</p>');
+  if(repere)p.push('          <p>'+esc(repere.replace(/\.?$/,'.'))+'</p>');
+  p.push('          <p><a href="https://www.openstreetmap.org/search?query='+encodeURIComponent(adresseLigne)+'" target="_blank" rel="noopener">Voir sur la carte →</a></p>');
+  p.push('          <p style="color: var(--muted); margin-bottom: 0;">Secteur d\'intervention : '+esc(listeFr(communes))+'.</p>\n        </div>\n      </div>\n    </div>\n  </section>\n');
+
+  p.push('  <section id="equipe" class="alt">\n    <div class="wrap">\n      <div class="section-head">\n        <h2>Votre équipe</h2>\n        <p>Les infirmiers et infirmières du cabinet.</p>\n      </div>\n      <div class="team">\n'+membres+'\n      </div>\n    </div>\n  </section>\n');
+
+  p.push('  <section id="contact">\n    <div class="wrap">\n      <div class="contact-box">\n        <h2 style="margin-top:0">Nous contacter</h2>');
+  p.push('        <p>Pour une prise en charge ou un renseignement, appelez-nous. En cas d\'absence, laissez un message : nous vous rappelons.</p>');
+  p.push('        <div class="phones">\n          <a class="btn" href="tel:'+esc(telH)+'">📞 '+esc(tel)+'</a>'+(a.tel2?'\n          <a class="btn ghost" href="tel:'+esc(telHref(a.tel2))+'">📱 '+esc(fmtTel(a.tel2))+'</a>':'')+'\n        </div>');
+  p.push('        <p><a class="btn ghost vcf" href="#" download="'+esc(vcfNom)+'">＋ Enregistrer le cabinet dans mes contacts</a></p>');
+  if(mail)p.push('        <p>✉️ <span id="mail">'+esc(mail[0])+' [arobase] '+esc(mail[1])+' [point] '+esc(mail[2])+'</span></p>\n        <p style="color: var(--muted); font-size: .92rem;">Merci de ne pas communiquer d\'informations médicales par e-mail.</p>');
+  p.push('      </div>\n    </div>\n  </section>\n</main>\n');
+
+  p.push('<footer class="site">\n  <div class="wrap">\n    <p>© <span id="year">'+new Date().getFullYear()+'</span> '+esc(nom)+' – '+esc(adresseLigne)+'</p>\n    <h3 id="mentions">Mentions légales</h3>\n    <p>');
+  p.push('      Site édité par '+(m?'le '+esc(nom.charAt(0).toLowerCase()+nom.slice(1)):esc(nom))+', '+esc(adresseLigne)+' – '+esc(tel)+'.<br>');
+  if(resp.nom)p.push('      Directeur de la publication : '+esc(resp.nom)+', '+titreIDE(respMembre?respMembre.g:'f').charAt(0).toLowerCase()+titreIDE(respMembre?respMembre.g:'f').slice(1)+(resp.rpps?' (RPPS '+esc(digits(resp.rpps))+')':'')+'.<br>');
+  p.push('      Les infirmiers exercent sous la déontologie de la profession (Code de la santé publique) et sont inscrits à l\'Ordre national des infirmiers.<br>');
+  p.push(hebergeur?'      Hébergement : '+esc(hebergeur).replace(/\n/g,', ')+'.<br>':'      <!-- À compléter : nom et adresse de l\'hébergeur du site. -->');
+  p.push('      Ce site ne dépose aucun cookie et ne collecte aucune donnée personnelle.\n    </p>\n  </div>\n</footer>\n');
+
+  p.push('<script>\n'+
+  '  var MAIL = '+jsonScript(mail)+';\n  var VCARD = '+jsonScript(vcard)+';\n'+
+  "  document.getElementById('year').textContent = new Date().getFullYear();\n\n"+
+  "  // Jour courant en évidence dans les permanences\n  var row = document.querySelector('#hours tr[data-day=\"' + new Date().getDay() + '\"]');\n  if (row) row.classList.add('today');\n\n"+
+  "  // E-mail assemblé à l'affichage : absent du code source en clair\n  var addr = MAIL ? MAIL[0] + '@' + MAIL[1] + '.' + MAIL[2] : '';\n  if (addr) document.getElementById('mail').innerHTML = '<a href=\"mailto:' + addr + '\">' + addr + '</a>';\n\n"+
+  "  // Fiche contact à enregistrer dans le téléphone\n  var lignes = VCARD.slice(); if (addr) lignes.splice(lignes.length - 1, 0, 'EMAIL;TYPE=WORK:' + addr);\n  var vcf = 'data:text/vcard;charset=utf-8,' + encodeURIComponent(lignes.join('\\r\\n'));\n  document.querySelectorAll('a.vcf').forEach(function (l) { l.href = vcf; });\n"+
+  '<\/script>\n</body>\n</html>\n');
+  return p.join('\n');
+}
+
+/* ==========================================================
+   LES QUESTIONS
+   ========================================================== */
+var STEPS = [
+  {id:'nom', type:'text', label:'Nom du cabinet', q:"Pour commencer, comment s'appelle votre cabinet ?", ex:'Cabinet infirmier des Tilleuls'},
+  {id:'rue', type:'text', label:'Adresse', q:"Quelle est l'adresse du cabinet ? Le numéro et la rue suffisent pour l'instant.", ex:'8 rue des Écoles'},
+  {id:'cpville', type:'cpville', label:'Code postal et commune', q:'Le code postal et la commune ?'},
+  {id:'repere', type:'text', label:'Repère', optional:true, q:'Un repère pour aider les patients à trouver le cabinet ?', ex:'En face de la mairie'},
+  {id:'tel', type:'tel', label:'Téléphone', q:'Quel est le numéro de téléphone principal du cabinet ?', ex:'05 36 49 12 34'},
+  {id:'tel2', type:'tel', label:'Second numéro', optional:true, q:'Avez-vous un second numéro à afficher, par exemple un portable ?', ex:'06 39 98 12 34'},
+  {id:'email', type:'email', label:'E-mail', optional:true, q:"Quelle adresse e-mail souhaitez-vous afficher ?\nElle sera protégée contre les robots qui collectent les adresses.", ex:'cabinet.infirmier@orange.fr'},
+  {id:'communes', type:'chips', label:"Communes d'intervention", q:'Dans quelles communes intervenez-vous ? Ajoutez-les une par une.', ex:'Saint-Pierre'},
+  {id:'jours', type:'choice', label:'Jours à domicile', q:'Quels jours faites-vous des soins à domicile ?', options:['7 jours sur 7','Du lundi au samedi','Du lundi au vendredi']},
+  {id:'heures', type:'timerange', label:'Heures à domicile', q:'Entre quelles heures passez-vous chez les patients ?'},
+  {id:'perm', type:'yesno', label:'Permanences au cabinet', q:'Recevez-vous aussi des patients au cabinet, pendant des permanences ?'},
+  {id:'permanences', type:'hours', label:'Horaires de permanence', q:'Cochez les jours de permanence et indiquez les horaires.', when:function(a){return a.perm===true;}},
+  {id:'equipe', type:'team', label:'Équipe', q:'Qui sont les infirmiers et infirmières du cabinet ?\nVous pouvez ne mettre que le prénom si vous préférez.'},
+  {id:'soins', type:'care', label:'Soins proposés', q:'Quels soins proposez-vous ? Ouvrez chaque catégorie et cochez ce qui vous concerne.'},
+  {id:'autres', type:'textarea', label:'Autres soins', optional:true, q:'Voulez-vous ajouter des soins qui ne sont pas dans la liste ?', ex:'Écrivez un soin par ligne'},
+  {id:'accroche', type:'accroche', label:"Phrase d'accroche", q:"Quelle phrase voulez-vous en grand en haut de votre page ? Choisissez le ton qui vous ressemble."},
+  {id:'responsable', type:'publisher', label:'Responsable du site', q:'Pour les mentions légales, qui est responsable de la page ?'},
+  {id:'theme', type:'theme', label:'Couleur', q:'Dernière question : quelle couleur préférez-vous pour votre page ?'}
+];
+
+/* ==========================================================
+   ÉTAT ET SAUVEGARDE AUTOMATIQUE
+   ========================================================== */
+var CLE='assistant-cabinet-v1';
+var S={a:{}, skipped:{}, idx:-1, editing:false, fini:false};
+function sauver(){try{localStorage.setItem(CLE,JSON.stringify(S));}catch(e){}}
+function charger(){try{var v=localStorage.getItem(CLE);return v?JSON.parse(v):null;}catch(e){return null;}}
+function visible(i){var s=STEPS[i];return !s.when||s.when(S.a);}
+function visibles(){return STEPS.map(function(s,i){return i;}).filter(visible);}
+function valeur(id){return S.a[id];}
+
+function resume(step){
+  var v=S.a[step.id];
+  if(step.id==='cpville')v=S.a.cp?(S.a.cp+' '+(S.a.ville||'')):undefined;
+  if(S.skipped[step.id]||v==null||v==='')return null;
+  switch(step.type){
+    case 'tel': return fmtTel(v);
+    case 'chips': return v.join(', ');
+    case 'timerange': return 'De '+fmtH(v[0])+' à '+fmtH(v[1]);
+    case 'yesno': return v?'Oui':'Non';
+    case 'hours': return JOURS.filter(function(j){return v[j.d]&&v[j.d].length;}).map(function(j){return j.n+' : '+creneaux(v,j.d);}).join('\n');
+    case 'team': return v.map(function(p){return p.nom+' ('+(p.g==='m'?'infirmier':'infirmière')+')';}).join('\n');
+    case 'care': var n=0;for(var k in v)n+=v[k].length;return n+' soin'+(n>1?'s':'')+' sélectionné'+(n>1?'s':'');
+    case 'publisher': return v.nom+(v.rpps?' · RPPS '+digits(v.rpps):'');
+    case 'theme': return (THEMES[v]||{}).nom||v;
+    case 'accroche': return ACCROCHES[v]?ACCROCHES[v].nom+' : « '+texteAccroche(v)+' »':'« '+v+' »';
+    default: return String(v);
+  }
+}
+
+/* ==========================================================
+   AFFICHAGE DU CHAT
+   ========================================================== */
+var $msgs=document.getElementById('messages'), $comp=document.getElementById('composer');
+
+function bulleBot(step,nouveau){
+  var b=h('div',{'class':'msg bot'+(nouveau?' new':'')},step.q);
+  if(step.ex&&nouveau)b.appendChild(h('span',{'class':'ex',text:'Exemple : '+step.ex}));
+  return b;
+}
+
+function rendu(){
+  $msgs.innerHTML='';
+  var vis=visibles();
+  if(S.idx<0){accueil();majProgres();return;}
+  vis.forEach(function(i){
+    if(i>S.idx&&S.idx<STEPS.length)return;
+    var st=STEPS[i];
+    if(i===S.idx){$msgs.appendChild(bulleBot(st,true));return;}
+    $msgs.appendChild(bulleBot(st,false));
+    var r=resume(st);
+    $msgs.appendChild(h('div',{'class':'msg me'+(r?'':' skip')},r||'Question passée'));
+  });
+  if(S.idx>=STEPS.length){S.fini?fin():recap();}
+  else widget(STEPS[S.idx]);
+  majProgres();majApercu();
+  requestAnimationFrame(function(){var v=$msgs.querySelector('.visuel');
+    if(v&&S.idx>=STEPS.length)$msgs.scrollTop=v.offsetTop-$msgs.offsetTop-12;else $msgs.scrollTop=$msgs.scrollHeight;});
+  sauver();
+}
+
+function majProgres(){
+  var vis=visibles(), pos=vis.indexOf(S.idx);
+  var lab=document.getElementById('step-label'), bar=document.getElementById('bar');
+  if(S.idx<0){lab.textContent='Environ 10 minutes';bar.style.width='0';}
+  else if(S.idx>=STEPS.length){lab.textContent=S.fini?'Terminé':'Vérification';bar.style.width='100%';}
+  else{lab.textContent='Question '+(pos+1)+' sur '+vis.length;bar.style.width=(pos/vis.length*100)+'%';}
+}
+
+function aller(i){S.idx=i;rendu();}
+function suivant(){
+  if(S.editing){S.editing=false;aller(STEPS.length);return;}
+  var i=S.idx+1;while(i<STEPS.length&&!visible(i))i++;aller(i);
+}
+function precedent(){var i=S.idx-1;while(i>=0&&!visible(i))i--;if(i>=0){S.editing=false;aller(i);}}
+
+function repondre(step,val){S.a[step.id]=val;delete S.skipped[step.id];suivant();}
+function passer(step){delete S.a[step.id];S.skipped[step.id]=true;suivant();}
+
+/* ---------- Accueil ---------- */
+function accueil(){
+  $msgs.appendChild(h('div',{'class':'msg bot new'},"Bonjour ! 👋\nJe vais vous poser quelques questions pour créer la page internet de votre cabinet. Comptez une dizaine de minutes.\n\nVos réponses sont gardées sur cet appareil : vous pouvez vous arrêter et reprendre plus tard."));
+  $comp.innerHTML='';
+  var reprise=charger(), q=h('div',{'class':'quick'});
+  if(reprise&&reprise.idx>=0&&Object.keys(reprise.a||{}).length){
+    q.appendChild(h('button',{'class':'opt',type:'button',style:'background:var(--primary);color:#fff;border-color:var(--primary)',onclick:function(){S=reprise;S.editing=false;rendu();}},'▶️ Reprendre là où je m\'étais arrêté(e)'));
+    q.appendChild(h('button',{'class':'opt',type:'button',onclick:function(){if(confirm('Effacer vos réponses et tout recommencer ?')){S={a:{},skipped:{},idx:0,editing:false,fini:false};rendu();}}},'🔄 Tout recommencer'));
+  } else {
+    q.appendChild(h('button',{'class':'opt',type:'button',style:'background:var(--primary);color:#fff;border-color:var(--primary)',onclick:function(){aller(0);}},'Commencer'));
+  }
+  var fichier=h('input',{type:'file',accept:'.json,application/json',hidden:true,onchange:function(e){
+    lireFichier(e.target.files[0],function(d){S={a:d,skipped:{},idx:STEPS.length,editing:false,fini:false};rendu();});}});
+  q.appendChild(h('label',{'class':'opt',style:'cursor:pointer;font-weight:500;color:var(--muted)'},'📂 J\'ai déjà un fichier de réponses',fichier));
+  $comp.appendChild(q);
+}
+
+function lireFichier(f,cb){
+  if(!f)return;var r=new FileReader();
+  r.onload=function(){try{cb(JSON.parse(r.result));}catch(e){alert("Ce fichier n'a pas pu être lu. Vérifiez qu'il s'agit bien du fichier de réponses.");}};
+  r.readAsText(f);
+}
+
+/* ---------- Zone de réponse ---------- */
+function barreActions(step,valider){
+  var bar=h('div',{'class':'actions'});
+  var vis=visibles();
+  if(vis.indexOf(S.idx)>0)bar.appendChild(h('button',{'class':'b link',type:'button',onclick:precedent},'← Précédente'));
+  if(step.optional)bar.appendChild(h('button',{'class':'b sec',type:'button',onclick:function(){passer(step);}},'Passer'));
+  if(valider)bar.appendChild(h('button',{'class':'b main',type:'button',onclick:valider},S.editing?'Enregistrer':'Valider'));
+  return bar;
+}
+function erreur(box,txt){var e=box.querySelector('.err');if(!e){e=h('p',{'class':'err',role:'alert'});box.insertBefore(e,box.lastChild);}e.textContent=txt;}
+
+function widget(step){
+  $comp.innerHTML='';
+  var box=h('div'), v=valeur(step.id);
+  var f={text:wText,email:wText,tel:wText,textarea:wText,cpville:wCpVille,chips:wChips,choice:wChoice,yesno:wYesNo,
+         timerange:wTime,hours:wHours,team:wTeam,care:wCare,publisher:wPublisher,theme:wTheme,accroche:wAccroche}[step.type];
+  f(step,box,v);
+  $comp.appendChild(box);
+  var first=$comp.querySelector('input:not([type=checkbox]):not([type=file]),textarea');
+  if(first&&window.matchMedia('(min-width:700px)').matches)first.focus();
+}
+
+function wText(step,box,v){
+  var multi=step.type==='textarea';
+  var inp=h(multi?'textarea':'input',{'class':'inp',type:multi?null:(step.type==='email'?'email':step.type==='tel'?'tel':'text'),
+    placeholder:step.ex||'', autocomplete:'off', 'aria-label':step.label,
+    inputmode:step.type==='tel'?'tel':step.type==='email'?'email':null});
+  inp.value=v||'';
+  function ok(){
+    var x=inp.value.trim();
+    if(!x){if(step.optional)return passer(step);return erreur(box,'Merci de remplir ce champ, ou revenez en arrière.');}
+    if(step.type==='tel'&&normTel(x).length!==10)return erreur(box,'Ce numéro semble incomplet : il faut 10 chiffres, par exemple 05 36 49 12 34.');
+    if(step.type==='email'&&!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(x))return erreur(box,'Cette adresse e-mail semble incomplète. Elle doit ressembler à nom@exemple.fr.');
+    repondre(step,step.type==='tel'?fmtTel(x):x);
+  }
+  if(!multi)inp.addEventListener('keydown',function(e){if(e.key==='Enter'){e.preventDefault();ok();}});
+  box.appendChild(inp);box.appendChild(barreActions(step,ok));
+}
+
+function wCpVille(step,box){
+  var cp=h('input',{'class':'inp',inputmode:'numeric',maxlength:'5',placeholder:'12345',id:'f-cp',autocomplete:'off'});
+  var vi=h('input',{'class':'inp',placeholder:'Villeneuve',id:'f-ville',autocomplete:'off'});
+  cp.value=S.a.cp||'';vi.value=S.a.ville||'';
+  box.appendChild(h('div',{'class':'row2'},
+    h('div',{'class':'field',style:'flex:0 0 120px'},h('label',{'for':'f-cp'},'Code postal'),cp),
+    h('div',{'class':'field'},h('label',{'for':'f-ville'},'Commune'),vi)));
+  function ok(){
+    if(digits(cp.value).length!==5)return erreur(box,'Le code postal doit comporter 5 chiffres.');
+    if(!vi.value.trim())return erreur(box,'Merci d\'indiquer la commune.');
+    S.a.cp=digits(cp.value);S.a.ville=vi.value.trim();
+    if(!S.a.communes||!S.a.communes.length)S.a.communes=[S.a.ville];
+    S.a.cpville=true;delete S.skipped.cpville;suivant();
+  }
+  vi.addEventListener('keydown',function(e){if(e.key==='Enter')ok();});
+  box.appendChild(barreActions(step,ok));
+}
+
+function wChips(step,box,v){
+  var liste=(v||[]).slice(), zone=h('div',{'class':'chips'});
+  var inp=h('input',{'class':'inp',placeholder:step.ex,'aria-label':'Nom de la commune',autocomplete:'off'});
+  function dessiner(){zone.innerHTML='';liste.forEach(function(c,i){
+    zone.appendChild(h('span',{'class':'chip'},c,h('button',{type:'button','aria-label':'Retirer '+c,onclick:function(){liste.splice(i,1);dessiner();}},'×')));});}
+  function ajouter(){var x=inp.value.trim();if(x&&liste.indexOf(x)<0)liste.push(x);inp.value='';dessiner();inp.focus();}
+  inp.addEventListener('keydown',function(e){if(e.key==='Enter'){e.preventDefault();ajouter();}});
+  dessiner();
+  box.appendChild(zone);
+  box.appendChild(h('div',{'class':'row2'},inp,h('button',{'class':'b sec',type:'button',style:'flex:0 0 auto',onclick:ajouter},'Ajouter')));
+  box.appendChild(barreActions(step,function(){
+    if(inp.value.trim())ajouter();
+    if(!liste.length)return erreur(box,'Ajoutez au moins une commune.');
+    repondre(step,liste);}));
+}
+
+function wChoice(step,box,v){
+  var q=h('div',{'class':'quick'});
+  step.options.forEach(function(o){q.appendChild(h('button',{'class':'opt'+(v===o?' on':''),type:'button',onclick:function(){repondre(step,o);}},o));});
+  var autre=h('input',{'class':'inp',placeholder:'Autre, par exemple : du lundi au samedi et le dimanche matin'});
+  if(v&&step.options.indexOf(v)<0)autre.value=v;
+  box.appendChild(q);
+  box.appendChild(h('div',{'class':'field',style:'margin-top:10px'},h('label',{},'Autre réponse'),autre));
+  box.appendChild(barreActions(step,function(){if(!autre.value.trim())return erreur(box,'Choisissez une réponse ci-dessus ou écrivez la vôtre.');repondre(step,autre.value.trim());}));
+}
+
+function wYesNo(step,box,v){
+  var q=h('div',{'class':'quick'});
+  q.appendChild(h('button',{'class':'opt'+(v===true?' on':''),type:'button',onclick:function(){repondre(step,true);}},'Oui, nous avons des permanences'));
+  q.appendChild(h('button',{'class':'opt'+(v===false?' on':''),type:'button',onclick:function(){repondre(step,false);}},'Non, uniquement à domicile'));
+  box.appendChild(q);box.appendChild(barreActions(step,null));
+}
+
+function wTime(step,box,v){
+  v=v||['06:30','20:00'];
+  var d=h('input',{'class':'inp',type:'time',id:'f-d'}),f=h('input',{'class':'inp',type:'time',id:'f-f'});d.value=v[0];f.value=v[1];
+  box.appendChild(h('div',{'class':'row2'},h('div',{'class':'field'},h('label',{'for':'f-d'},'À partir de'),d),h('div',{'class':'field'},h('label',{'for':'f-f'},"Jusqu'à"),f)));
+  box.appendChild(barreActions(step,function(){
+    if(!d.value||!f.value)return erreur(box,'Indiquez les deux horaires.');
+    if(d.value>=f.value)return erreur(box,"L'heure de fin doit être après l'heure de début.");
+    repondre(step,[d.value,f.value]);}));
+}
+
+function wHours(step,box,v){
+  var p=JSON.parse(JSON.stringify(v||{}));
+  var wrap=h('div');
+  function dessiner(){
+    wrap.innerHTML='';
+    JOURS.forEach(function(j){
+      var slots=p[j.d]||[], on=slots.length>0;
+      var cb=h('input',{type:'checkbox'});cb.checked=on;
+      cb.addEventListener('change',function(){p[j.d]=cb.checked?[['07:00','08:00']]:[];dessiner();});
+      var bloc=h('div',{'class':'day'+(on?' on':'')},h('label',{},cb,j.n));
+      slots.forEach(function(s,k){
+        var d=h('input',{type:'time','aria-label':j.n+' début'}),f=h('input',{type:'time','aria-label':j.n+' fin'});d.value=s[0];f.value=s[1];
+        d.addEventListener('change',function(){s[0]=d.value;});f.addEventListener('change',function(){s[1]=f.value;});
+        var ligne=h('div',{'class':'slot'},'De',d,'à',f);
+        if(k>0)ligne.appendChild(h('button',{'class':'x',type:'button',onclick:function(){slots.splice(k,1);dessiner();}},'retirer'));
+        bloc.appendChild(ligne);
+      });
+      if(on&&slots.length<2)bloc.appendChild(h('div',{'class':'slot'},h('button',{'class':'x',type:'button',onclick:function(){slots.push(['17:00','18:00']);dessiner();}},'+ Ajouter un 2e créneau ce jour-là')));
+      wrap.appendChild(bloc);
+    });
+  }
+  dessiner();box.appendChild(wrap);
+  box.appendChild(barreActions(step,function(){
+    var n=0,mauvais=false;for(var k in p){p[k]=p[k].filter(function(s){return s[0]&&s[1];});n+=p[k].length;p[k].forEach(function(s){if(s[0]>=s[1])mauvais=true;});}
+    if(!n)return erreur(box,'Cochez au moins un jour, ou revenez en arrière pour répondre « Non ».');
+    if(mauvais)return erreur(box,"Sur un des créneaux, l'heure de fin est avant l'heure de début.");
+    repondre(step,p);}));
+}
+
+function wTeam(step,box,v){
+  var liste=(v&&v.length?v:[{nom:'',g:'f'}]).map(function(x){return {nom:x.nom,g:x.g};});
+  var wrap=h('div');
+  function dessiner(){
+    wrap.innerHTML='';
+    liste.forEach(function(p,i){
+      var inp=h('input',{'class':'inp',placeholder:'Prénom et nom','aria-label':'Prénom et nom de la personne '+(i+1),autocomplete:'off'});inp.value=p.nom;
+      inp.addEventListener('input',function(){p.nom=inp.value;});
+      var seg=h('div',{'class':'seg'});
+      [['f','Infirmière'],['m','Infirmier']].forEach(function(o){seg.appendChild(h('button',{type:'button','class':p.g===o[0]?'on':'','aria-pressed':String(p.g===o[0]),onclick:function(){p.g=o[0];dessiner();}},o[1]));});
+      var carte=h('div',{'class':'member'},inp,seg);
+      if(liste.length>1)carte.appendChild(h('button',{'class':'b link small',type:'button',onclick:function(){liste.splice(i,1);dessiner();}},'Retirer cette personne'));
+      wrap.appendChild(carte);
+    });
+    wrap.appendChild(h('button',{'class':'b sec small',type:'button',onclick:function(){liste.push({nom:'',g:'f'});dessiner();wrap.querySelectorAll('input')[liste.length-1].focus();}},'+ Ajouter une personne'));
+  }
+  dessiner();box.appendChild(wrap);
+  box.appendChild(barreActions(step,function(){
+    var l=liste.map(function(p){return {nom:p.nom.trim(),g:p.g};}).filter(function(p){return p.nom;});
+    if(!l.length)return erreur(box,'Indiquez au moins une personne.');
+    repondre(step,l);}));
+}
+
+function wCare(step,box,v){
+  var sel=JSON.parse(JSON.stringify(v||{}));
+  SOINS.forEach(function(c){
+    sel[c.id]=sel[c.id]||[];
+    var compteur=h('span',{'class':'n'});
+    function maj(){compteur.textContent=sel[c.id].length?sel[c.id].length+' coché'+(sel[c.id].length>1?'s':''):'';}
+    var inner=h('div',{'class':'in'});
+    var boxes=[];
+    c.items.forEach(function(it){
+      var cb=h('input',{type:'checkbox'});cb.checked=sel[c.id].indexOf(it)>=0;boxes.push(cb);
+      cb.addEventListener('change',function(){
+        sel[c.id]=c.items.filter(function(x,i){return boxes[i].checked;});maj();});
+      inner.appendChild(h('label',{'class':'check'},cb,h('span',{},it)));
+    });
+    inner.insertBefore(h('button',{'class':'b link small',type:'button',onclick:function(){
+      var tout=boxes.some(function(b){return !b.checked;});boxes.forEach(function(b){b.checked=tout;});
+      sel[c.id]=tout?c.items.slice():[];maj();}},'Tout cocher / tout décocher'),inner.firstChild);
+    maj();
+    box.appendChild(h('details',{'class':'cat'},h('summary',{},c.ico+' '+c.titre,compteur),inner));
+  });
+  box.appendChild(barreActions(step,function(){
+    var n=0;for(var k in sel)n+=sel[k].length;
+    if(!n)return erreur(box,'Cochez au moins un soin.');
+    repondre(step,sel);}));
+}
+
+function wPublisher(step,box,v){
+  v=v||{};
+  var equipe=(S.a.equipe||[]), choix=v.nom||'';
+  box.appendChild(h('p',{style:'margin:0 0 8px;color:var(--muted);font-size:.92rem'},'Son nom apparaîtra en bas de la page, comme « directeur de la publication ».'));
+  var q=h('div',{'class':'quick'});
+  function dessiner(){q.innerHTML='';equipe.forEach(function(p){
+    q.appendChild(h('button',{'class':'opt'+(choix===p.nom?' on':''),type:'button',onclick:function(){choix=p.nom;dessiner();}},p.nom));});}
+  dessiner();box.appendChild(q);
+  var rpps=h('input',{'class':'inp',inputmode:'numeric',placeholder:'11 chiffres',id:'f-rpps',autocomplete:'off'});rpps.value=v.rpps||'';
+  box.appendChild(h('div',{'class':'field',style:'margin-top:12px'},h('label',{'for':'f-rpps'},'Son numéro RPPS (facultatif, il figure sur la carte CPS)'),rpps));
+  box.appendChild(barreActions(step,function(){
+    if(!choix)return erreur(box,'Touchez le nom de la personne responsable.');
+    var r=digits(rpps.value);
+    if(r&&r.length!==11)return erreur(box,'Le numéro RPPS comporte 11 chiffres.');
+    repondre(step,{nom:choix,rpps:r});}));
+}
+
+function wAccroche(step,box,v){
+  var choix=v||'', q=h('div',{'class':'quick'});
+  var perso=h('textarea',{'class':'inp',style:'min-height:70px',placeholder:'Ou écrivez votre propre phrase','aria-label':'Votre propre phrase'});
+  if(v&&!ACCROCHES[v])perso.value=v;
+  function dessiner(){q.innerHTML='';Object.keys(ACCROCHES).forEach(function(k){
+    q.appendChild(h('button',{'class':'opt'+(choix===k?' on':''),type:'button','aria-pressed':String(choix===k),onclick:function(){
+      choix=k;perso.value='';S.a.accroche=k;majApercu();dessiner();}},
+      h('span',{style:'display:block;color:var(--primary-dark);font-size:.88rem'},ACCROCHES[k].nom),
+      h('span',{style:'display:block;font-weight:500'},'« '+texteAccroche(k)+' »')));});}
+  perso.addEventListener('input',function(){if(perso.value.trim()){choix='';dessiner();S.a.accroche=perso.value.trim();majApercu();}});
+  dessiner();box.appendChild(q);
+  box.appendChild(h('div',{'class':'field',style:'margin-top:10px'},perso));
+  box.appendChild(barreActions(step,function(){
+    var x=perso.value.trim()||choix;
+    if(!x)return erreur(box,'Choisissez une phrase ou écrivez la vôtre.');
+    repondre(step,x);}));
+}
+
+function wTheme(step,box,v){
+  var choix=v||'turquoise', g=h('div',{'class':'themes'});
+  function dessiner(){g.innerHTML='';Object.keys(THEMES).forEach(function(k){var t=THEMES[k].light;
+    g.appendChild(h('button',{'class':'theme'+(choix===k?' on':''),type:'button','aria-pressed':String(choix===k),onclick:function(){choix=k;S.a.theme=k;majApercu();dessiner();}},
+      h('span',{'class':'sw'},h('i',{style:'background:'+t.primary}),h('i',{style:'background:'+t.soft}),h('i',{style:'background:'+t.warm})),
+      h('strong',{},THEMES[k].nom)));});}
+  dessiner();box.appendChild(g);
+  box.appendChild(h('p',{style:'color:var(--muted);font-size:.9rem;margin:10px 0 0'},'Touchez une couleur pour la voir sur l\'aperçu.'));
+  box.appendChild(barreActions(step,function(){repondre(step,choix);}));
+}
+
+/* ---------- Visuel de la page ---------- */
+function visuel(texte){
+  var fr=h('iframe',{title:'Votre page, telle qu\'elle apparaîtra sur un téléphone',loading:'lazy'});
+  fr.srcdoc=genererPage(S.a,{apercu:true});
+  var zoom=h('div',{'class':'zoom'},fr), ecran=h('div',{'class':'ecran'},zoom);
+  // La page est affichée à la taille d'un vrai téléphone (390 px), puis réduite pour tenir dans la bulle
+  function ajuster(){var l=ecran.clientWidth;if(!l)return;var k=Math.min(1,l/390);
+    fr.style.transform='scale('+k+')';zoom.style.height=(780*k)+'px';}
+  requestAnimationFrame(ajuster);window.addEventListener('resize',ajuster);
+  return h('div',{'class':'visuel msg new'},
+    h('p',{},texte),
+    ecran,
+    h('button',{'class':'b sec small',type:'button',onclick:ouvrirApercu},'Voir ma page en grand'));
+}
+
+/* ---------- Récapitulatif ---------- */
+function recap(){
+  $msgs.appendChild(visuel('Merci ! Voici votre page, telle qu\'elle apparaîtra sur un téléphone. Faites-la défiler pour tout voir.'));
+  $msgs.appendChild(h('div',{'class':'msg bot new'},'Si quelque chose ne vous convient pas, touchez « Modifier » à côté de la réponse concernée.'));
+  var r=h('div',{'class':'recap msg new'});
+  visibles().forEach(function(i){var st=STEPS[i];
+    r.appendChild(h('div',{'class':'it'},h('div',{},h('small',{},st.label),h('span',{},resume(st)||'—')),
+      h('button',{type:'button',onclick:function(){S.editing=true;aller(i);}},'Modifier')));});
+  $msgs.appendChild(r);
+  $comp.innerHTML='';
+  var ouvrir=h('button',{'class':'b sec',type:'button',onclick:ouvrirApercu},'Voir ma page');
+  ouvrir.classList.add('btn-preview-inline');
+  $comp.appendChild(h('div',{'class':'actions',style:'margin-top:0'},
+    h('button',{'class':'b link',type:'button',onclick:function(){S.editing=false;precedent();}},'← Précédente'),
+    window.matchMedia('(min-width:1000px)').matches?null:ouvrir,
+    h('button',{'class':'b main',type:'button',onclick:function(){S.fini=true;rendu();}},"C'est tout bon")));
+}
+
+/* ---------- Envoi ---------- */
+function donnees(){var d=JSON.parse(JSON.stringify(S.a));delete d.cpville;return d;}
+function nomFichier(){return 'reponses-'+slug(S.a.nom)+'.json';}
+function telecharger(nom,contenu,type){
+  var blob=new Blob([contenu],{type:type}),url=URL.createObjectURL(blob),a=h('a',{href:url,download:nom});
+  document.body.appendChild(a);a.click();setTimeout(function(){URL.revokeObjectURL(url);a.remove();},1000);
+}
+function fin(){
+  var qui=DESTINATAIRE||'la personne qui vous a transmis ce lien';
+  $msgs.appendChild(visuel('Votre page est prête ! 🎉'));
+  $msgs.appendChild(h('div',{'class':'msg bot new'},'Dernière étape : envoyez vos réponses à '+qui+', qui s\'occupera de la mettre en ligne.'));
+  $comp.innerHTML='';
+  var info=h('p',{'class':'err',style:'color:var(--primary-dark)',role:'status'});
+  var q=h('div',{'class':'quick'});
+  var json=JSON.stringify(donnees(),null,2);
+  var fichier=new File([json],nomFichier(),{type:'application/json'});
+  var partage=navigator.canShare&&navigator.canShare({files:[fichier]});
+  q.appendChild(h('button',{'class':'opt',type:'button',style:'background:var(--primary);color:#fff;border-color:var(--primary)',onclick:function(){
+    if(partage){navigator.share({files:[fichier],title:'Réponses pour la page du cabinet'}).catch(function(){});}
+    else{telecharger(nomFichier(),json,'application/json');
+      info.textContent='Le fichier « '+nomFichier()+' » a été enregistré dans vos téléchargements. Joignez-le à un e-mail ou à un message WhatsApp pour '+qui+'.';}
+  }},partage?'📤 Envoyer mes réponses (e-mail, WhatsApp…)':'📥 Enregistrer mes réponses'));
+  q.appendChild(h('button',{'class':'opt',type:'button',onclick:function(){
+    var fait=function(){info.textContent='Réponses copiées. Collez-les dans un message pour '+qui+' (appui long puis « Coller »).';};
+    if(navigator.clipboard)navigator.clipboard.writeText(json).then(fait,function(){info.textContent='La copie n\'a pas fonctionné. Utilisez plutôt le bouton du dessus.';});
+  }},'📋 Copier mes réponses pour les coller dans un message'));
+  $comp.appendChild(q);$comp.appendChild(info);
+  $comp.appendChild(h('div',{'class':'actions'},h('button',{'class':'b link',type:'button',onclick:function(){S.fini=false;rendu();}},'← Revenir au récapitulatif')));
+}
+
+/* ==========================================================
+   APERÇU
+   ========================================================== */
+var $prev=document.getElementById('preview'), timer=null;
+function majApercu(){clearTimeout(timer);timer=setTimeout(function(){$prev.srcdoc=genererPage(S.a,{apercu:true});},120);}
+function ouvrirApercu(){majApercu();document.getElementById('preview-col').classList.add('open');}
+document.getElementById('open-preview').addEventListener('click',ouvrirApercu);
+document.getElementById('close-preview').addEventListener('click',function(){document.getElementById('preview-col').classList.remove('open');});
+
+/* ==========================================================
+   ESPACE ADMINISTRATEUR  (adresse de la page suivie de #admin)
+   ========================================================== */
+var ADM={d:null};
+function admCharger(d){
+  ADM.d=d;
+  document.getElementById('adm-status').textContent='Réponses chargées : '+(d.nom||'cabinet sans nom')+'.';
+  ['adm-download','adm-edit','adm-json'].forEach(function(id){document.getElementById(id).disabled=false;});
+  admApercu();
+}
+function admHeb(){return document.getElementById('adm-host').value;}
+function admApercu(){if(ADM.d)document.getElementById('adm-preview').srcdoc=genererPage(ADM.d,{apercu:true,hebergeur:admHeb()});}
+function initAdmin(){
+  document.getElementById('app').hidden=true;document.getElementById('admin').hidden=false;
+  var host=document.getElementById('adm-host');
+  try{host.value=localStorage.getItem('assistant-cabinet-hebergeur')||'';}catch(e){}
+  host.addEventListener('input',function(){try{localStorage.setItem('assistant-cabinet-hebergeur',host.value);}catch(e){}admApercu();});
+  document.getElementById('adm-file').addEventListener('change',function(e){lireFichier(e.target.files[0],admCharger);});
+  document.getElementById('adm-example').addEventListener('click',function(){admCharger(JSON.parse(JSON.stringify(EXEMPLE)));});
+  document.getElementById('adm-paste-btn').addEventListener('click',function(){
+    try{admCharger(JSON.parse(document.getElementById('adm-paste').value));}catch(e){document.getElementById('adm-status').textContent='Le texte collé n\'est pas lisible. Vérifiez qu\'il a été copié en entier.';}});
+  document.getElementById('adm-download').addEventListener('click',function(){
+    telecharger('index.html',genererPage(ADM.d,{hebergeur:admHeb()}),'text/html');});
+  document.getElementById('adm-json').addEventListener('click',function(){
+    telecharger('reponses-'+slug(ADM.d.nom)+'.json',JSON.stringify(ADM.d,null,2),'application/json');});
+  document.getElementById('adm-edit').addEventListener('click',function(){
+    S={a:JSON.parse(JSON.stringify(ADM.d)),skipped:{},idx:STEPS.length,editing:false,fini:false};S.a.cpville=true;
+    location.hash='';});
+}
+
+function demarrer(){
+  if(location.hash==='#admin'){initAdmin();return;}
+  document.getElementById('admin').hidden=true;document.getElementById('app').hidden=false;
+  rendu();
+}
+window.addEventListener('hashchange',demarrer);
+demarrer();
+</script>
+</body>
+</html>
